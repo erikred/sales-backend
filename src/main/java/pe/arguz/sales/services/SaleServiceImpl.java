@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.arguz.sales.dao.ISaleDao;
+import pe.arguz.sales.model.DetailSale;
 import pe.arguz.sales.model.Sale;
 import pe.arguz.sales.response.SaleResponseRest;
 
@@ -76,6 +77,8 @@ public class SaleServiceImpl implements ISaleService{
         Logger logger = Logger.getLogger(getClass().getName());
         try {
             sale.getProducts().forEach(sale::addDetail);
+            sale.setTotal(sale.getProducts().stream().mapToDouble(DetailSale::calculateSubTotal).sum());
+            logger.info("Valor: "+sale.getTotal());
             Sale saleSaved = saleDao.save(sale);
             if (saleSaved != null) {
                 saleList.add(saleSaved);
@@ -87,6 +90,74 @@ public class SaleServiceImpl implements ISaleService{
             }
         }catch (Exception e){
             responseRest.setMetadata(RESPUESTA_FALLIDA,"500", "Error al guardar venta");
+            logger.severe(ERROR + e);
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<SaleResponseRest> update(Sale sale, Long id) {
+        SaleResponseRest responseRest = new SaleResponseRest();
+        List<Sale> list = new ArrayList<>();
+        Logger logger = Logger.getLogger(getClass().getName());
+        try {
+
+            Optional<Sale> saleSearch = saleDao.findById(id);
+
+            if (saleSearch.isPresent()) {
+                // se procederá a actualizar el registro de nombre cliente y fecha
+                saleSearch.get().setClientName(sale.getClientName());
+                saleSearch.get().setDate(sale.getDate());
+
+                Sale saleToUpdate = saleDao.save(saleSearch.get());
+
+                if (saleToUpdate != null) {
+                    list.add(saleToUpdate);
+                    responseRest.getSaleResponse().setSales(list);
+                    responseRest.setMetadata(RESPUESTA_OK, "200", "Venta actualizada");
+                } else {
+                    responseRest.setMetadata(RESPUESTA_FALLIDA, "400", "Venta no actualizada");
+                    return new ResponseEntity<>(responseRest, HttpStatus.BAD_REQUEST);
+                }
+
+
+            } else {
+                responseRest.setMetadata(RESPUESTA_FALLIDA, "404", "Venta no encontrada");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+
+
+        } catch (Exception e) {
+            responseRest.setMetadata(RESPUESTA_FALLIDA, "500", "Error al actualizar venta");
+            logger.severe(ERROR + e);
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+        }
+
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<SaleResponseRest> deleteById(Long id) {
+        SaleResponseRest responseRest = new SaleResponseRest();
+        Logger logger = Logger.getLogger(getClass().getName());
+        try{
+            Optional<Sale> saleDeleted = saleDao.findById(id);
+            if (saleDeleted.isPresent()) {
+                // se procederá a eliminar venta
+                saleDao.deleteById(id);
+                responseRest.setMetadata(RESPUESTA_OK, "200", "Venta eliminada");
+            }else {
+                responseRest.setMetadata(RESPUESTA_FALLIDA, "404", "Venta no encontrada");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+
+        }catch (Exception e){
+            responseRest.setMetadata(RESPUESTA_FALLIDA, "500", "Error al eliminar venta");
             logger.severe(ERROR + e);
             return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
         }

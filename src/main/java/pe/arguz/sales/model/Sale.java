@@ -26,7 +26,7 @@ public class Sale implements Serializable {
     @Column
     private LocalDate date;
     //@OneToMany(cascade= CascadeType.ALL, targetEntity = DetailSale.class)
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "sale", cascade = CascadeType.PERSIST)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "sale", cascade = CascadeType.PERSIST, orphanRemoval = true)
     //@JoinColumn(name="id")
     //@ListIndexBase()
     private List<DetailSale> products = new ArrayList<>();
@@ -37,15 +37,8 @@ public class Sale implements Serializable {
         detailSale.setSale(this);
     }
 
-    public void calculateTotal(){
-        this.total = products!=null? products.stream().mapToDouble(DetailSale::getSubTotal).sum() : 0.00;
-    }
 
-    /*public Sale(Long id, String clientName, LocalDate date, List<DetailSale> products) {
-        this.id = id;
-        this.clientName = clientName;
-        this.date = date;
-        this.products = products;
-        this.total = products!=null? products.stream().mapToDouble(DetailSale::getSubTotal).sum() : 0.00;
-    }*/
+    public Double calculateTotal(){
+        return products!=null? products.stream().mapToDouble(DetailSale::getSubTotal).sum() : 0.00;
+    }
 }

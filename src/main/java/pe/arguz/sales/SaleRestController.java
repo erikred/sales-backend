@@ -40,4 +40,14 @@ public class SaleRestController {
     public ResponseEntity<SaleResponseRest> save(@RequestBody Sale sale){
         return saleService.save(sale);
     }
+
+    @PutMapping("/sales/{id}")
+    public ResponseEntity<SaleResponseRest> update(@RequestBody Sale sale, @PathVariable Long id){
+        return saleService.update(sale, id);
+    }
+
+    @DeleteMapping("/sales/{id}")
+    public ResponseEntity<SaleResponseRest> delete(@PathVariable Long id) {
+        return saleService.deleteById(id);
+    }
 }

@@ -9,4 +9,6 @@ public interface ISaleService {
     ResponseEntity<SaleResponseRest> searchById(Long id);
     ResponseEntity<SaleResponseRest> save(Sale sale);
 
+    ResponseEntity<SaleResponseRest> update(Sale sale, Long id);
+    ResponseEntity<SaleResponseRest> deleteById(Long id);
 }
